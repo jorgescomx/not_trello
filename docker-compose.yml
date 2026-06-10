@@ -1,0 +1,15 @@
+services:
+  nottrello:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - nottrello_data:/data
+    environment:
+      DATABASE_URL: "file:/data/nottrello.db"
+      NEXTAUTH_SECRET: "change-this-secret-before-deploying"
+      NEXTAUTH_URL: "http://localhost:3000"
+    restart: unless-stopped
+
+volumes:
+  nottrello_data:
