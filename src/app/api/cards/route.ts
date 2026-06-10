@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { title, listId } = await req.json();
+  const { title, listId, swimlaneId } = await req.json();
   if (!title || !listId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
   const list = await prisma.list.findFirst({
@@ -19,6 +19,6 @@ export async function POST(req: Request) {
   const last = await prisma.card.findFirst({ where: { listId }, orderBy: { position: "desc" } });
   const position = (last?.position ?? 0) + 1000;
 
-  const card = await prisma.card.create({ data: { title, listId, position } });
+  const card = await prisma.card.create({ data: { title, listId, position, swimlaneId: swimlaneId ?? null } });
   return NextResponse.json(card, { status: 201 });
 }

@@ -7,6 +7,7 @@ export type Card = {
   position: number;
   dueDate: string | null;
   listId: string;
+  swimlaneId: string | null;
   labels: CardLabel[];
 };
 export type List = {
@@ -16,9 +17,17 @@ export type List = {
   boardId: string;
   cards: Card[];
 };
+export type Swimlane = {
+  id: string;
+  title: string;
+  position: number;
+  color: string;
+  boardId: string;
+};
 export type Board = {
   id: string;
   title: string;
   color: string;
   lists: List[];
+  swimlanes: Swimlane[];
 };

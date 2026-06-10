@@ -18,12 +18,25 @@ model User {
 }
 
 model Board {
+  id         String      @id @default(cuid())
+  title      String
+  color      String      @default("#026AA7")
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lists      List[]
+  swimlanes  Swimlane[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Swimlane {
   id        String   @id @default(cuid())
   title     String
-  color     String   @default("#026AA7")
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lists     List[]
+  position  Float
+  color     String   @default("#e0e7ff")
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -47,6 +60,8 @@ model Card {
   dueDate     DateTime?
   listId      String
   list        List        @relation(fields: [listId], references: [id], onDelete: Cascade)
+  swimlaneId  String?
+  swimlane    Swimlane?   @relation(fields: [swimlaneId], references: [id], onDelete: SetNull)
   labels      CardLabel[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

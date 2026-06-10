@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { Card } from "@/types/board";
+import type { Card, Swimlane } from "@/types/board";
 
 const PRESET_LABELS = [
   { name: "Bug", color: "#E04355" },
@@ -15,17 +15,19 @@ const PRESET_LABELS = [
 type Props = {
   card: Card;
   listTitle: string;
+  swimlanes: Swimlane[];
   onClose: () => void;
   onUpdate: (card: Card) => void;
   onDelete: (cardId: string) => void;
 };
 
-export function CardModal({ card, listTitle, onClose, onUpdate, onDelete }: Props) {
+export function CardModal({ card, listTitle, swimlanes, onClose, onUpdate, onDelete }: Props) {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description ?? "");
   const [dueDate, setDueDate] = useState(
     card.dueDate ? new Date(card.dueDate).toISOString().split("T")[0] : ""
   );
+  const [swimlaneId, setSwimlaneId] = useState<string | null>(card.swimlaneId);
   const [saving, setSaving] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -49,10 +51,11 @@ export function CardModal({ card, listTitle, onClose, onUpdate, onDelete }: Prop
         title: title.trim(),
         description: description.trim() || null,
         dueDate: dueDate || null,
+        swimlaneId,
       }),
     });
     const updated = await res.json();
-    onUpdate({ ...card, ...updated });
+    onUpdate({ ...card, ...updated, dueDate: updated.dueDate ?? null });
     setSaving(false);
   }
 
@@ -64,20 +67,13 @@ export function CardModal({ card, listTitle, onClose, onUpdate, onDelete }: Prop
 
   async function toggleLabel(name: string, color: string) {
     const existing = activeLabels.find((l) => l.name === name);
-
     if (existing) {
-      // remove label — find CardLabel
       const res = await fetch(`/api/cards/${card.id}/labels`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ labelName: name }),
       });
-      if (res.ok) {
-        onUpdate({
-          ...card,
-          labels: card.labels.filter((cl) => cl.label.name !== name),
-        });
-      }
+      if (res.ok) onUpdate({ ...card, labels: card.labels.filter((cl) => cl.label.name !== name) });
     } else {
       const res = await fetch(`/api/cards/${card.id}/labels`, {
         method: "POST",
@@ -103,24 +99,38 @@ export function CardModal({ card, listTitle, onClose, onUpdate, onDelete }: Prop
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               rows={2}
-              className="w-full text-lg font-semibold text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-2 py-1 -mx-2 -my-1"
+              className="w-full text-lg font-semibold text-gray-900 bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white rounded-lg px-2 py-1 -mx-2 -my-1"
             />
-            <p className="text-xs text-gray-400 mt-1 ml-1">in list <span className="font-medium text-gray-500">{listTitle}</span></p>
+            <p className="text-xs text-gray-400 mt-1 ml-1">
+              in list <span className="font-medium text-gray-500">{listTitle}</span>
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none mt-1"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none mt-1">✕</button>
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Swimlane */}
+          {swimlanes.length > 0 && (
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
+                Swimlane
+              </label>
+              <select
+                value={swimlaneId ?? ""}
+                onChange={(e) => setSwimlaneId(e.target.value || null)}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              >
+                <option value="">— General (no swimlane) —</option>
+                {swimlanes.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Labels */}
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
-              Labels
-            </label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Labels</label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {activeLabels.map((label) => (
                 <span
@@ -161,37 +171,30 @@ export function CardModal({ card, listTitle, onClose, onUpdate, onDelete }: Prop
 
           {/* Due date */}
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
-              Due Date
-            </label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Due Date</label>
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
-              Description
-            </label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Add a description…"
-              className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 resize-none text-gray-900 bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
             />
           </div>
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-1">
-            <button
-              onClick={handleDelete}
-              className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
-            >
+            <button onClick={handleDelete} className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors">
               Delete card
             </button>
             <button

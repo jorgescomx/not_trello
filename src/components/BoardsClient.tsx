@@ -60,7 +60,7 @@ export function BoardsClient({ initialBoards }: { initialBoards: Board[] }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Board title"
-            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-sm border border-gray-300 rounded px-2 py-1 text-gray-900 bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
           />
           <div className="flex gap-1 flex-wrap">
             {COLORS.map((c) => (

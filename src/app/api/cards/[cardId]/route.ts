@@ -44,6 +44,7 @@ export async function PATCH(req: Request, { params }: Params) {
       ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
       ...(data.position !== undefined && { position: data.position }),
       ...(data.listId !== undefined && { listId: data.listId }),
+      ...(data.swimlaneId !== undefined && { swimlaneId: data.swimlaneId ?? null }),
     },
     include: { labels: { include: { label: true } } },
   });

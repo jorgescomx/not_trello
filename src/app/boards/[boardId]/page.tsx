@@ -16,6 +16,7 @@ export default async function BoardPage({ params }: Props) {
   const raw = await prisma.board.findFirst({
     where: { id: boardId, userId: session.user.id },
     include: {
+      swimlanes: { orderBy: { position: "asc" } },
       lists: {
         orderBy: { position: "asc" },
         include: {
@@ -30,11 +31,17 @@ export default async function BoardPage({ params }: Props) {
 
   if (!raw) notFound();
 
-  // Serialize Dates to strings for client components
   const board: Board = {
     id: raw.id,
     title: raw.title,
     color: raw.color,
+    swimlanes: raw.swimlanes.map((s) => ({
+      id: s.id,
+      title: s.title,
+      position: s.position,
+      color: s.color,
+      boardId: s.boardId,
+    })),
     lists: raw.lists.map((l) => ({
       id: l.id,
       title: l.title,
@@ -47,6 +54,7 @@ export default async function BoardPage({ params }: Props) {
         position: c.position,
         dueDate: c.dueDate ? c.dueDate.toISOString() : null,
         listId: c.listId,
+        swimlaneId: c.swimlaneId,
         labels: c.labels.map((cl) => ({ label: cl.label })),
       })),
     })),
