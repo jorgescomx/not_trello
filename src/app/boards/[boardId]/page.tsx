@@ -46,6 +46,7 @@ export default async function BoardPage({ params }: Props) {
       id: l.id,
       title: l.title,
       position: l.position,
+      color: l.color,
       boardId: l.boardId,
       cards: l.cards.map((c) => ({
         id: c.id,
@@ -61,10 +62,10 @@ export default async function BoardPage({ params }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: board.color }}>
+    <div className="flex flex-col h-full bg-slate-100 dark:bg-slate-900">
       <Header />
-      <div className="px-4 py-2 flex items-center gap-3">
-        <h1 className="text-white font-bold text-lg">{board.title}</h1>
+      <div style={{ backgroundColor: board.color }} className="px-5 py-2.5 flex items-center shrink-0 shadow-sm">
+        <h1 className="text-white font-semibold text-sm tracking-wide drop-shadow">{board.title}</h1>
       </div>
       <BoardView board={board} />
     </div>

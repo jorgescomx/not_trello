@@ -14,12 +14,9 @@ export default async function BoardsPage() {
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
       <Header />
-      <main className="flex-1 p-6 overflow-y-auto">
-        <h2 className="text-gray-700 font-semibold text-sm mb-4 uppercase tracking-wide">
-          Your Boards
-        </h2>
+      <main className="flex-1 p-8 overflow-y-auto">
         <BoardsClient initialBoards={boards} />
       </main>
     </div>

@@ -17,7 +17,7 @@ export function CardItem({ card, isDragging = false, onClick }: Props) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isSorting ? 0.4 : 1,
+    opacity: isSorting ? 0.35 : 1,
   };
 
   const hasDueDate = !!card.dueDate;
@@ -29,36 +29,37 @@ export function CardItem({ card, isDragging = false, onClick }: Props) {
       style={isDragging ? {} : style}
       {...(isDragging ? {} : { ...attributes, ...listeners })}
       onClick={isDragging ? undefined : onClick}
-      className={`bg-white rounded-lg shadow-sm mb-1.5 p-2.5 cursor-pointer hover:bg-gray-50 transition-colors select-none ${
-        isDragging ? "rotate-2 shadow-lg" : ""
+      className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700/60 shadow-sm mb-1.5 p-2.5 cursor-pointer select-none transition-all duration-150 ${
+        isDragging
+          ? "rotate-1 shadow-2xl ring-2 ring-blue-400/20 scale-[1.02]"
+          : "hover:shadow-md hover:-translate-y-0.5 hover:border-slate-200 dark:hover:border-slate-600"
       }`}
     >
-      {/* Labels */}
       {card.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1.5">
           {card.labels.map(({ label }) => (
             <span
               key={label.id}
               style={{ backgroundColor: label.color }}
-              className="h-2 w-8 rounded-full"
+              className="h-1.5 w-8 rounded-full"
               title={label.name}
             />
           ))}
         </div>
       )}
 
-      <p className="text-sm text-gray-800 leading-snug">{card.title}</p>
+      <p className="text-sm text-slate-700 dark:text-slate-200 leading-snug">{card.title}</p>
 
-      {/* Meta row */}
       {hasDueDate && (
-        <div className="mt-1.5 flex items-center gap-1">
+        <div className="mt-2 flex items-center gap-1">
           <span
-            className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               isOverdue
-                ? "bg-red-100 text-red-700"
-                : "bg-gray-100 text-gray-600"
+                ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 ring-1 ring-red-100 dark:ring-red-900"
+                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
             }`}
           >
+            {isOverdue ? "⚠ " : ""}
             {new Date(card.dueDate!).toLocaleDateString()}
           </span>
         </div>

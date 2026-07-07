@@ -14,6 +14,7 @@ export type List = {
   id: string;
   title: string;
   position: number;
+  color: string;
   boardId: string;
   cards: Card[];
 };

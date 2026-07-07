@@ -25,6 +25,7 @@ model Board {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   lists      List[]
   swimlanes  Swimlane[]
+  archived   Boolean     @default(false)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -45,6 +46,7 @@ model List {
   id        String   @id @default(cuid())
   title     String
   position  Float
+  color     String   @default("#f1f5f9")
   boardId   String
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
   cards     Card[]
@@ -63,8 +65,18 @@ model Card {
   swimlaneId  String?
   swimlane    Swimlane?   @relation(fields: [swimlaneId], references: [id], onDelete: SetNull)
   labels      CardLabel[]
+  comments    Comment[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Label {

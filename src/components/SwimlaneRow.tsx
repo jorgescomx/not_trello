@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import type { Card, List, Swimlane } from "@/types/board";
 import { CardItem } from "./CardItem";
-import { NO_SWIMLANE } from "./BoardView";
+import { NO_SWIMLANE, SWIMLANE_PREFIX } from "./BoardView";
 
 type Props = {
-  swimlane: Swimlane | null; // null = uncategorized row
+  swimlane: Swimlane | null;
   lists: List[];
   onAddCard: (listId: string, title: string) => void;
   onCardClick: (card: Card) => void;
@@ -30,7 +31,23 @@ export function SwimlaneRow({
   const [showMenu, setShowMenu] = useState(false);
 
   const rowLabel = swimlane?.title ?? "General";
-  const rowColor = swimlane?.color ?? "#f8fafc";
+  const rowColor = swimlane?.color ?? "#e2e8f0";
+
+  const swimlaneId = swimlane?.id ?? null;
+  const cardCount = lists.reduce(
+    (sum, list) => sum + list.cards.filter((c) => c.swimlaneId === swimlaneId).length,
+    0
+  );
+
+  const sortableId = swimlane ? `${SWIMLANE_PREFIX}${swimlane.id}` : "uncategorized";
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: sortableId,
+    disabled: !swimlane,
+  });
+
+  const sortableStyle = swimlane
+    ? { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1 }
+    : undefined;
 
   function saveTitle() {
     if (swimlane && titleValue.trim() && titleValue !== swimlane.title) {
@@ -40,20 +57,23 @@ export function SwimlaneRow({
   }
 
   return (
-    <div className="flex mt-2">
-      {/* Swimlane label */}
-      <div
-        className="w-36 shrink-0 mr-2 rounded-lg flex flex-col"
-        style={{ backgroundColor: rowColor }}
-      >
-        <div className="flex items-center gap-1 px-2 py-2">
-          <button
-            onClick={() => setCollapsed((v) => !v)}
-            className="text-gray-500 hover:text-gray-700 text-xs font-bold w-4 shrink-0"
-          >
-            {collapsed ? "▶" : "▼"}
-          </button>
+    <div ref={setNodeRef} style={sortableStyle} className="flex mt-3">
+      {/* Swimlane label — pill badge + controls, fixed width to align with header */}
+      <div className="w-36 shrink-0 mr-2 pt-1 flex flex-col gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
+          {/* Drag handle */}
+          {swimlane && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing shrink-0 text-base leading-none"
+              title="Drag to reorder"
+            >
+              ⠿
+            </button>
+          )}
 
+          {/* Pill badge / editable title */}
           {editingTitle && swimlane ? (
             <input
               autoFocus
@@ -61,31 +81,47 @@ export function SwimlaneRow({
               onChange={(e) => setTitleValue(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => e.key === "Enter" && saveTitle()}
-              className="flex-1 text-xs font-semibold bg-white border border-blue-400 rounded px-1 py-0.5 focus:outline-none min-w-0"
+              className="flex-1 text-xs font-semibold bg-white dark:bg-slate-700 border border-blue-400 rounded-full px-2 py-0.5 focus:outline-none min-w-0 text-slate-800 dark:text-slate-100"
             />
           ) : (
             <button
               onClick={() => swimlane && setEditingTitle(true)}
-              className="flex-1 text-xs font-semibold text-gray-700 text-left truncate hover:text-gray-900"
+              className="flex-1 text-xs font-bold px-2.5 py-1 rounded-full text-slate-700 text-left truncate ring-1 ring-black/10 shadow-sm hover:opacity-90 transition-opacity min-w-0"
+              style={{ backgroundColor: rowColor }}
               title={rowLabel}
             >
               {rowLabel}
             </button>
           )}
 
+          {/* Card count badge */}
+          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
+            {cardCount}
+          </span>
+        </div>
+
+        {/* Collapse + menu on second line */}
+        <div className="flex items-center gap-1 pl-1">
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 text-[10px] font-bold transition-colors"
+          >
+            {collapsed ? "▶ Show" : "▼ Hide"}
+          </button>
+
           {swimlane && (
-            <div className="relative">
+            <div className="relative ml-auto">
               <button
                 onClick={() => setShowMenu((v) => !v)}
-                className="text-gray-400 hover:text-gray-600 text-xs px-0.5"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 text-xs px-0.5 transition-colors"
               >
                 ···
               </button>
               {showMenu && (
-                <div className="absolute top-5 right-0 bg-white rounded-lg shadow-lg border border-gray-200 z-20 min-w-36 py-1">
+                <div className="absolute top-5 left-0 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-20 min-w-36 py-1 overflow-hidden">
                   <button
                     onClick={() => { setShowMenu(false); onDeleteSwimlane(swimlane.id); }}
-                    className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                    className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
                     Delete swimlane
                   </button>
@@ -147,8 +183,10 @@ function SwimlaneCell({
     <div className="w-56 shrink-0">
       <div
         ref={setNodeRef}
-        className={`min-h-[3rem] rounded-lg p-1.5 transition-colors ${
-          isOver ? "bg-blue-100/60" : "bg-white/30"
+        className={`min-h-[4rem] rounded-xl p-2 transition-all ${
+          isOver
+            ? "bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-200 dark:ring-blue-800"
+            : "bg-slate-100/80 dark:bg-slate-800/50"
         }`}
       >
         <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
@@ -158,7 +196,7 @@ function SwimlaneCell({
         </SortableContext>
 
         {addingCard ? (
-          <form onSubmit={submitCard} className="flex flex-col gap-1 mt-1">
+          <form onSubmit={submitCard} className="flex flex-col gap-1.5 mt-1">
             <textarea
               autoFocus
               value={newCardTitle}
@@ -171,17 +209,17 @@ function SwimlaneCell({
               }}
               placeholder="Card title…"
               rows={2}
-              className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 resize-none text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-sm border border-slate-200 dark:border-slate-600 rounded-xl px-2.5 py-2 resize-none text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             />
             <div className="flex gap-1">
-              <button type="submit" className="flex-1 bg-blue-600 text-white text-xs font-medium py-1.5 rounded-lg hover:bg-blue-700">Add</button>
-              <button type="button" onClick={() => setAddingCard(false)} className="flex-1 bg-gray-200 text-gray-700 text-xs font-medium py-1.5 rounded-lg hover:bg-gray-300">Cancel</button>
+              <button type="submit" className="flex-1 bg-blue-600 text-white text-xs font-semibold py-1.5 rounded-lg hover:bg-blue-500 transition-colors">Add</button>
+              <button type="button" onClick={() => setAddingCard(false)} className="flex-1 bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-200 text-xs font-medium py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors">Cancel</button>
             </div>
           </form>
         ) : (
           <button
             onClick={() => setAddingCard(true)}
-            className="w-full text-left text-xs text-gray-500 hover:text-gray-700 hover:bg-white/50 rounded px-1 py-1 transition-colors mt-1"
+            className="w-full text-left text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/60 rounded-lg px-2 py-1.5 transition-all mt-1"
           >
             + Add card
           </button>

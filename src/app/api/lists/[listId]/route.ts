@@ -23,6 +23,7 @@ export async function PATCH(req: Request, { params }: Params) {
     data: {
       ...(data.title !== undefined && { title: data.title }),
       ...(data.position !== undefined && { position: data.position }),
+      ...(data.color !== undefined && { color: data.color }),
     },
   });
   return NextResponse.json(updated);

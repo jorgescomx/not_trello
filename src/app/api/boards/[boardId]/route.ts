@@ -37,7 +37,11 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const board = await prisma.board.updateMany({
     where: { id: boardId, userId: session.user.id },
-    data: { title: data.title, color: data.color },
+    data: {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.color !== undefined && { color: data.color }),
+      ...(data.archived !== undefined && { archived: data.archived }),
+    },
   });
 
   if (board.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
